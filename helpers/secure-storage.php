@@ -21,6 +21,9 @@ class Secure_Storage {
 
     // Déchiffrement
     public function decrypt($encrypted) {
+        if (empty($encrypted)) {
+            return '';
+        }
         $decoded = base64_decode($encrypted);
         $nonce = substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
         $ciphertext = substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);

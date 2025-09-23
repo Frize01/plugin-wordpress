@@ -62,9 +62,10 @@ function administration_page()
             border-radius: 6px;
             padding: 24px 32px 16px 32px;
             margin-bottom: 32px;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.03);
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.03);
             max-width: 700px;
         }
+
         .brevo-danger {
             background: #fff0f0;
             border: 1px solid #dc3232;
@@ -74,32 +75,38 @@ function administration_page()
             margin-bottom: 32px;
             max-width: 700px;
         }
+
         .brevo-danger button {
             background: #dc3232 !important;
             color: #fff !important;
             border: none;
             margin-top: 1rem !important;
         }
+
         .brevo-form-table th {
             width: 180px;
             vertical-align: top;
             padding-top: 12px;
         }
+
         .brevo-form-table td {
             padding-bottom: 18px;
         }
+
         .brevo-label {
             font-weight: 600;
             margin-bottom: 4px;
             display: inline-block;
         }
-        .brevo-select, .brevo-input {
+
+        .brevo-select,
+        .brevo-input {
             min-width: 220px;
             margin-bottom: 6px;
         }
     </style>
     <div class="wrap">
-        <h1 style="margin-bottom:32px;">Configuration <span style="color:#0057b8;">Brevo Auto Campaign</span></h1>
+        <h1 style="margin-bottom:32px;">Configuration Brevo Auto Campaign</h1>
 
         <div class="brevo-box">
             <form method="post" action="" style="margin-bottom: 0;">
@@ -110,16 +117,6 @@ function administration_page()
                 <?php submit_button('Enregistrer la clé API', 'primary', 'submit', false); ?>
             </form>
         </div>
-
-        <?php if (!empty($api_key)) : ?>
-            <div class="brevo-danger">
-                <strong>Attention&nbsp;:</strong> Supprimer la clé API désactivera l’envoi automatique.<br>
-                <form method="post" action="" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer la clé API ? Cette action est irréversible.');" style="display:inline;">
-                    <input type="hidden" name="delete_api_key" value="1">
-                    <button type="submit" class="button">Supprimer la clé API</button>
-                </form>
-            </div>
-        <?php endif; ?>
 
         <?php if (!empty($api_key)) : ?>
             <div class="brevo-box">
@@ -137,7 +134,13 @@ function administration_page()
                                     <label style="margin-bottom:8px;display:inline-block;">
                                         <input type="checkbox" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][enabled]" value="1"
                                             <?php checked(!empty($cfg['enabled'])); ?>>
-                                        Activer l’envoi automatique
+                                        Activer l’envoi automatique d’une campagne lors de la publication
+                                    </label>
+                                    <br>
+                                    <label>
+                                        <input type="checkbox" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][draft]" value="1"
+                                            <?php checked(!empty($cfg['draft'])); ?>>
+                                        Créer la campagne en mode brouillon (l’envoi sera à déclenché manuellement dans Brevo)
                                     </label>
                                     <br>
                                     <label class="brevo-label" for="list_<?php echo $pt->name; ?>">Liste(s) Brevo :</label>
@@ -169,12 +172,39 @@ function administration_page()
                                         }
                                         ?>
                                     </select>
+                                    <?php
+                                    // Récupère un post du type courant
+                                    $acf_post = get_posts([
+                                        'post_type'      => $pt->name,
+                                        'posts_per_page' => 1,
+                                        'post_status'    => 'any',
+                                        'fields'         => 'ids'
+                                    ]);
+                                    if ($acf_post) {
+                                        $pt_fields = get_field_objects($acf_post[0]);
+                                        if ($pt_fields) {
+                                            echo '<br>Liste des champs ACF disponibles pour une campagne :<br>';
+                                            foreach ($pt_fields as $field) {
+                                                echo '<code style="background:#f4f4f4;border:1px solid #ddd;padding:2px 6px;margin:2px;display:inline-block;">{{ param.' . esc_html($field['name']) . ' }}</code>';
+                                            }
+                                        }
+                                    }
+                                    ?>
                                 </td>
-                            </tr>
-                        <?php endforeach; ?>
+                            <?php endforeach; ?>
                     </table>
                     <input type="hidden" name="form_type" value="post_types">
                     <?php submit_button('Enregistrer la configuration', 'primary', 'submit', false); ?>
+                </form>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($api_key)) : ?>
+            <div class="brevo-danger">
+                <strong>Attention&nbsp;:</strong> Supprimer la clé API désactivera l’envoi automatique.<br>
+                <form method="post" action="" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer la clé API ? Cette action est irréversible.');" style="display:inline;">
+                    <input type="hidden" name="delete_api_key" value="1">
+                    <button type="submit" class="button">Supprimer la clé API</button>
                 </form>
             </div>
         <?php endif; ?>
