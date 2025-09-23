@@ -173,21 +173,33 @@ function administration_page()
                                         ?>
                                     </select>
                                     <?php
-                                    // Récupère un post du type courant
-                                    $acf_post = get_posts([
-                                        'post_type'      => $pt->name,
-                                        'posts_per_page' => 1,
-                                        'post_status'    => 'any',
-                                        'fields'         => 'ids'
-                                    ]);
-                                    if ($acf_post) {
-                                        $pt_fields = get_field_objects($acf_post[0]);
-                                        if ($pt_fields) {
-                                            echo '<br>Liste des champs ACF disponibles pour une campagne :<br>';
-                                            foreach ($pt_fields as $field) {
-                                                echo '<code style="background:#f4f4f4;border:1px solid #ddd;padding:2px 6px;margin:2px;display:inline-block;">{{ param.' . esc_html($field['name']) . ' }}</code>';
+                                    // Liste les champs ACF liés au post type, même sans contenu
+                                    $acf_fields = [];
+                                    if (function_exists('acf_get_field_groups')) {
+                                        $field_groups = acf_get_field_groups(['post_type' => $pt->name]);
+                                        if ($field_groups) {
+                                            foreach ($field_groups as $group) {
+                                                if (isset($group['key']) && function_exists('acf_get_fields')) {
+                                                    $fields = acf_get_fields($group['key']);
+                                                    if ($fields) {
+                                                        foreach ($fields as $field) {
+                                                            if (!empty($field['name'])) {
+                                                                $acf_fields[$field['name']] = $field['label'];
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
+                                    }
+
+                                    if ($acf_fields) {
+                                        echo '<br><span class="brevo-label">Champs ACF disponibles pour ce post type :</span><br>';
+                                        foreach ($acf_fields as $name => $label) {
+                                            echo '<code style="background:#f4f4f4;border:1px solid #ddd;padding:2px 6px;margin:2px;display:inline-block;">{{ param.' . esc_html($name) . ' }}</code> ';
+                                        }
+                                    } else {
+                                        echo '<br><span style="color:#888;font-size:13px;">Aucun champ ACF trouvé pour ce post type (vérifiez vos groupes de champs ACF).</span>';
                                     }
                                     ?>
                                 </td>
