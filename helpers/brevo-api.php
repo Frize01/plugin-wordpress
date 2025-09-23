@@ -39,9 +39,25 @@ class BrevoAPI
      * Récupère les listes de contacts depuis l'API Brevo
      * @return void
      */
-    public function getLists()
+    public function getLists(): null | array
     {
-        // Appel API pour récupérer les listes
+        $response = wp_remote_get(
+            'https://api.brevo.com/v3/contacts/lists',
+            [
+                'headers' => [
+                    'accept'  => 'application/json',
+                    'api-key' => $this->api_key,
+                ],
+                'timeout' => 15,
+            ]
+        );
+
+        if (is_wp_error($response)) {
+            return null;
+        }
+
+        $body = wp_remote_retrieve_body($response);
+        return json_decode($body, true);
     }
 
     /**

@@ -26,7 +26,7 @@ function administration_add_admin_page()
 
 
 $crypt = new Secure_Storage();
-$brevo_api = New BrevoAPI();
+$brevo_api = new BrevoAPI();
 
 if (isset($_POST['delete_api_key'])) {
     update_option('brevo_auto_campaign_APIKEY', '');
@@ -47,73 +47,136 @@ function administration_page()
     $raw_key = get_option('brevo_auto_campaign_APIKEY', '');
     $api_key = trim((string)$raw_key) !== '' ? '******' : '';
 
-
     // Récupère tous les post types publics
     $post_types = get_post_types(['public' => true], 'objects');
-?>
-    <div class="wrap">
-        <h1>Configuration Brevo Auto Campaign</h1>
 
-        <!-- Formulaire Clé API -->
-        <form method="post" action="" style="margin-bottom: 1em;">
-            <h2>Clé API Brevo</h2>
-            <input type="text" name="brevo_auto_campaign_APIKEY" value="<?php echo $api_key;?>" style="width:400px">
-            <p>Elle sera stockée de manière sécurisée.</p>
-            <input type="hidden" name="form_type" value="api_key">
-            <?php submit_button('Enregistrer la clé API'); ?>
-        </form>
+    // Instancie BrevoAPI UNE SEULE FOIS
+    $brevo = new BrevoAPI();
+    $lists = $brevo->getLists();
+    $templates = $brevo->getTemplate();
+?>
+    <style>
+        .brevo-box {
+            background: #fff;
+            border: 1px solid #ccd0d4;
+            border-radius: 6px;
+            padding: 24px 32px 16px 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.03);
+            max-width: 700px;
+        }
+        .brevo-danger {
+            background: #fff0f0;
+            border: 1px solid #dc3232;
+            color: #dc3232;
+            padding: 16px 24px;
+            border-radius: 6px;
+            margin-bottom: 32px;
+            max-width: 700px;
+        }
+        .brevo-danger button {
+            background: #dc3232 !important;
+            color: #fff !important;
+            border: none;
+            margin-top: 1rem !important;
+        }
+        .brevo-form-table th {
+            width: 180px;
+            vertical-align: top;
+            padding-top: 12px;
+        }
+        .brevo-form-table td {
+            padding-bottom: 18px;
+        }
+        .brevo-label {
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: inline-block;
+        }
+        .brevo-select, .brevo-input {
+            min-width: 220px;
+            margin-bottom: 6px;
+        }
+    </style>
+    <div class="wrap">
+        <h1 style="margin-bottom:32px;">Configuration <span style="color:#0057b8;">Brevo Auto Campaign</span></h1>
+
+        <div class="brevo-box">
+            <form method="post" action="" style="margin-bottom: 0;">
+                <h2 style="margin-top:0;">Clé API Brevo</h2>
+                <input class="brevo-input" type="text" name="brevo_auto_campaign_APIKEY" value="<?php echo $api_key; ?>" style="width:400px">
+                <p style="color:#666;font-size:13px;">Elle sera stockée de manière sécurisée.</p>
+                <input type="hidden" name="form_type" value="api_key">
+                <?php submit_button('Enregistrer la clé API', 'primary', 'submit', false); ?>
+            </form>
+        </div>
 
         <?php if (!empty($api_key)) : ?>
-            <!-- Bouton danger pour supprimer la clé -->
-            <form method="post" action="" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer la clé API ? Cette action est irréversible.');" style="margin-bottom:2em;">
-                <input type="hidden" name="delete_api_key" value="1">
-                <button type="submit" class="button button-danger" style="background:#dc3232;color:#fff;border:none;">
-                    Supprimer la clé API
-                </button>
-            </form>
+            <div class="brevo-danger">
+                <strong>Attention&nbsp;:</strong> Supprimer la clé API désactivera l’envoi automatique.<br>
+                <form method="post" action="" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer la clé API ? Cette action est irréversible.');" style="display:inline;">
+                    <input type="hidden" name="delete_api_key" value="1">
+                    <button type="submit" class="button">Supprimer la clé API</button>
+                </form>
+            </div>
         <?php endif; ?>
 
         <?php if (!empty($api_key)) : ?>
-            <!-- Formulaire Post Types -->
-            <form method="post" action="">
-                <h2>Configuration des Post Types</h2>
-                <table class="form-table">
-                    <?php foreach ($post_types as $pt):
-                        $cfg = $configs[$pt->name] ?? ['listIds' => '', 'templateId' => '', 'enabled' => '']; ?>
-                        <tr>
-                            <th><?php echo $pt->labels->name; ?> (<?php echo $pt->labels->singular_name; ?>)</th>
-                            <td>
-                                <label>
-                                    <input type="checkbox" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][enabled]" value="1"
-                                        <?php checked(!empty($cfg['enabled'])); ?>>
-                                    Activer
-                                </label>
-                                <br>
-                                Liste(s) Brevo ID :
-                                <input type="text" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][listIds]" value="<?php echo esc_attr($cfg['listIds']); ?>" placeholder="ex: 123,456">
-                                <br>
-                                Template ID :
-                                <select name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][templateId]" id="">
-                                    <option value="">-- Sélectionner un template --</option>
-                                    <?php
-                                    $brevo = new BrevoAPI();
-                                    $templates = $brevo->getTemplate();
-                                    if ($templates && isset($templates['templates'])) {
-                                        foreach ($templates['templates'] as $template) {
-                                            $selected = ($cfg['templateId'] == $template['id']) ? 'selected' : '';
-                                            echo "<option value=\"" . esc_attr($template['id']) . "\" $selected>" . esc_html($template['name']) . " (ID: " . esc_html($template['id']) . ")</option>";
+            <div class="brevo-box">
+                <form method="post" action="">
+                    <h2 style="margin-top:0;">Configuration des Post Types</h2>
+                    <table class="form-table brevo-form-table">
+                        <?php foreach ($post_types as $pt):
+                            $cfg = $configs[$pt->name] ?? ['listIds' => '', 'templateId' => '', 'enabled' => '']; ?>
+                            <tr>
+                                <th>
+                                    <span class="brevo-label"><?php echo $pt->labels->name; ?></span>
+                                    <br><span style="color:#888;font-size:12px;"><?php echo $pt->labels->singular_name; ?></span>
+                                </th>
+                                <td>
+                                    <label style="margin-bottom:8px;display:inline-block;">
+                                        <input type="checkbox" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][enabled]" value="1"
+                                            <?php checked(!empty($cfg['enabled'])); ?>>
+                                        Activer l’envoi automatique
+                                    </label>
+                                    <br>
+                                    <label class="brevo-label" for="list_<?php echo $pt->name; ?>">Liste(s) Brevo :</label>
+                                    <select class="brevo-select" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][listIds]" id="list_<?php echo $pt->name; ?>">
+                                        <option value="">Sélectionner une liste</option>
+                                        <?php
+                                        if ($lists && isset($lists['lists'])) {
+                                            foreach ($lists['lists'] as $list) {
+                                                $selected = in_array($list['id'], explode(',', $cfg['listIds'])) ? 'selected' : '';
+                                                echo "<option value=\"" . esc_attr($list['id']) . "\" $selected>" . esc_html($list['name']) . "</option>";
+                                            }
+                                        } else {
+                                            echo '<option value="">Aucune liste trouvée</option>';
                                         }
-                                    }
-                                    ?>
-                                </select>
-                                <!-- <input type="text" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][templateId]" value="<?php echo esc_attr($cfg['templateId']); ?>"> -->
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </table>
-                <input type="hidden" name="form_type" value="post_types">
-                <?php submit_button('Enregistrer la configuration'); ?>
-            </form>
+                                        ?>
+                                    </select>
+                                    <br>
+                                    <label class="brevo-label" for="tpl_<?php echo $pt->name; ?>">Template :</label>
+                                    <select class="brevo-select" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][templateId]" id="tpl_<?php echo $pt->name; ?>">
+                                        <option value="">Sélectionner un template</option>
+                                        <?php
+                                        if ($templates && isset($templates['templates'])) {
+                                            foreach ($templates['templates'] as $template) {
+                                                $selected = ($cfg['templateId'] == $template['id']) ? 'selected' : '';
+                                                echo "<option value=\"" . esc_attr($template['id']) . "\" $selected>" . esc_html($template['name']) . "</option>";
+                                            }
+                                        } else {
+                                            echo '<option value="">Aucun template trouvé</option>';
+                                        }
+                                        ?>
+                                    </select>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </table>
+                    <input type="hidden" name="form_type" value="post_types">
+                    <?php submit_button('Enregistrer la configuration', 'primary', 'submit', false); ?>
+                </form>
+            </div>
         <?php endif; ?>
     </div>
 <?php
