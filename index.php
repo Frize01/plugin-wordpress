@@ -1,14 +1,15 @@
 <?php
 /*
-Plugin Name: Véhicule Newsletter Auto
-Description: Envoie un mail automatique aux abonnés du plugin Newsletter quand un véhicule est publié.
-Version: 1.0
+Plugin Name: Brevo Auto Campaign
+Description: Envoie un mail automatique aux abonnés brevo quand un post est publié.
+Version: 0.1.0
 Author: Kévin V.
 */
 
 declare(strict_types=1);
 
-use Random\Engine\Secure;
+include_once __DIR__ . '/helpers/secure-storage.php';
+include_once __DIR__ . '/helpers/brevo-api.php';
 
 if (! defined('ABSPATH')) exit;
 function administration_add_admin_page()
@@ -23,8 +24,9 @@ function administration_add_admin_page()
     );
 }
 
-include_once __DIR__ . '/helpers/secure-storage.php';
+
 $crypt = new Secure_Storage();
+$brevo_api = New BrevoAPI();
 
 if (isset($_POST['delete_api_key'])) {
     update_option('brevo_auto_campaign_APIKEY', '');
@@ -91,7 +93,20 @@ function administration_page()
                                 <input type="text" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][listIds]" value="<?php echo esc_attr($cfg['listIds']); ?>" placeholder="ex: 123,456">
                                 <br>
                                 Template ID :
-                                <input type="text" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][templateId]" value="<?php echo esc_attr($cfg['templateId']); ?>">
+                                <select name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][templateId]" id="">
+                                    <option value="">-- Sélectionner un template --</option>
+                                    <?php
+                                    $brevo = new BrevoAPI();
+                                    $templates = $brevo->getTemplate();
+                                    if ($templates && isset($templates['templates'])) {
+                                        foreach ($templates['templates'] as $template) {
+                                            $selected = ($cfg['templateId'] == $template['id']) ? 'selected' : '';
+                                            echo "<option value=\"" . esc_attr($template['id']) . "\" $selected>" . esc_html($template['name']) . " (ID: " . esc_html($template['id']) . ")</option>";
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                                <!-- <input type="text" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][templateId]" value="<?php echo esc_attr($cfg['templateId']); ?>"> -->
                             </td>
                         </tr>
                     <?php endforeach; ?>
