@@ -308,7 +308,7 @@ function handle_send_for_post($post_id)
     $params['post_content'] = get_the_content(post: $post_id) ?: '';
     $params['post_excerpt'] = get_the_excerpt(post: $post_id) ?: '';
     $params['post_url'] = get_permalink(post: $post_id) ?: '';
-    $params['post_thumbnail'] = 'https://cdn.discordapp.com/attachments/1420498972753137794/1420508747528405012/image0.gif?ex=68d5a75d&is=68d455dd&hm=ef1e9b42ce31a74ba84c678260ced11a5d5f38cfde791ee7ae530a0194955b4f'; // get_the_post_thumbnail_url(post: $post_id) ?: '';
+    $params['post_thumbnail'] = get_the_post_thumbnail_url(post: $post_id) ?: '';
 
     $brevo = new BrevoAPI();
 
