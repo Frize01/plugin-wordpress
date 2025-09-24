@@ -53,7 +53,7 @@ function administration_page()
     // Instancie BrevoAPI UNE SEULE FOIS
     $brevo = new BrevoAPI();
     $lists = $brevo->getLists();
-    $templates = $brevo->getTemplate();
+    $templates = $brevo->getTemplates();
 ?>
     <style>
         .brevo-box {
@@ -130,48 +130,50 @@ function administration_page()
                                     <span class="brevo-label"><?php echo $pt->labels->name; ?></span>
                                     <br><span style="color:#888;font-size:12px;"><?php echo $pt->labels->singular_name; ?></span>
                                 </th>
-                                <td>
+                                <td style="display: flex; flex-direction: column; gap:5px;">
                                     <label style="margin-bottom:8px;display:inline-block;">
                                         <input type="checkbox" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][enabled]" value="1"
                                             <?php checked(!empty($cfg['enabled'])); ?>>
                                         Activer l’envoi automatique d’une campagne lors de la publication
                                     </label>
-                                    <br>
+
                                     <label>
                                         <input type="checkbox" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][draft]" value="1"
                                             <?php checked(!empty($cfg['draft'])); ?>>
                                         Créer la campagne en mode brouillon (l’envoi sera à déclenché manuellement dans Brevo)
                                     </label>
-                                    <br>
-                                    <label class="brevo-label" for="list_<?php echo $pt->name; ?>">Liste(s) Brevo :</label>
-                                    <select class="brevo-select" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][listIds]" id="list_<?php echo $pt->name; ?>">
-                                        <option value="">Sélectionner une liste</option>
-                                        <?php
-                                        if ($lists && isset($lists['lists'])) {
-                                            foreach ($lists['lists'] as $list) {
-                                                $selected = in_array($list['id'], explode(',', $cfg['listIds'])) ? 'selected' : '';
-                                                echo "<option value=\"" . esc_attr($list['id']) . "\" $selected>" . esc_html($list['name']) . "</option>";
+                                    <div style="display: flex; flex-direction: column; gap:1px;">
+                                        <label class="brevo-label" for="list_<?php echo $pt->name; ?>">Liste(s) Brevo :</label>
+                                        <select class="brevo-select" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][listIds]" id="list_<?php echo $pt->name; ?>">
+                                            <option value="">Sélectionner une liste</option>
+                                            <?php
+                                            if ($lists && isset($lists['lists'])) {
+                                                foreach ($lists['lists'] as $list) {
+                                                    $selected = in_array($list['id'], explode(',', $cfg['listIds'])) ? 'selected' : '';
+                                                    echo "<option value=\"" . esc_attr($list['id']) . "\" $selected>" . esc_html($list['name']) . "</option>";
+                                                }
+                                            } else {
+                                                echo '<option value="">Aucune liste trouvée</option>';
                                             }
-                                        } else {
-                                            echo '<option value="">Aucune liste trouvée</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                    <br>
-                                    <label class="brevo-label" for="tpl_<?php echo $pt->name; ?>">Template :</label>
-                                    <select class="brevo-select" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][templateId]" id="tpl_<?php echo $pt->name; ?>">
-                                        <option value="">Sélectionner un template</option>
-                                        <?php
-                                        if ($templates && isset($templates['templates'])) {
-                                            foreach ($templates['templates'] as $template) {
-                                                $selected = ($cfg['templateId'] == $template['id']) ? 'selected' : '';
-                                                echo "<option value=\"" . esc_attr($template['id']) . "\" $selected>" . esc_html($template['name']) . "</option>";
+                                            ?>
+                                        </select>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap:1px;">
+                                        <label class="brevo-label" for="tpl_<?php echo $pt->name; ?>">Template :</label>
+                                        <select class="brevo-select" name="brevo_auto_campaign_config[<?php echo $pt->name; ?>][templateId]" id="tpl_<?php echo $pt->name; ?>">
+                                            <option value="">Sélectionner un template</option>
+                                            <?php
+                                            if ($templates && isset($templates['templates'])) {
+                                                foreach ($templates['templates'] as $template) {
+                                                    $selected = ($cfg['templateId'] == $template['id']) ? 'selected' : '';
+                                                    echo "<option value=\"" . esc_attr($template['id']) . "\" $selected>" . esc_html($template['name']) . "</option>";
+                                                }
+                                            } else {
+                                                echo '<option value="">Aucun template trouvé</option>';
                                             }
-                                        } else {
-                                            echo '<option value="">Aucun template trouvé</option>';
-                                        }
-                                        ?>
-                                    </select>
+                                            ?>
+                                        </select>
+                                    </div>
                                     <?php
                                     // Liste les champs ACF liés au post type, même sans contenu
                                     $acf_fields = [];
@@ -194,12 +196,12 @@ function administration_page()
                                     }
 
                                     if ($acf_fields) {
-                                        echo '<br><span class="brevo-label">Champs ACF disponibles pour ce post type :</span><br>';
+                                        echo '<span class="brevo-label">Champs ACF disponibles pour ce post type :</span>';
                                         foreach ($acf_fields as $name => $label) {
                                             echo '<code style="background:#f4f4f4;border:1px solid #ddd;padding:2px 6px;margin:2px;display:inline-block;">{{ param.' . esc_html($name) . ' }}</code> ';
                                         }
                                     } else {
-                                        echo '<br><span style="color:#888;font-size:13px;">Aucun champ ACF trouvé pour ce post type (vérifiez vos groupes de champs ACF).</span>';
+                                        echo '<span style="color:#888;font-size:13px;">Aucun champ ACF trouvé pour ce post type (vérifiez vos groupes de champs ACF).</span>';
                                     }
                                     ?>
                                 </td>
@@ -225,3 +227,101 @@ function administration_page()
 }
 
 add_action('admin_menu', 'administration_add_admin_page');
+
+// ___________________________________________________________________________________
+// Nouvelle approche avec gestion des deux hooks et prévention des doublons
+// ___________________________________________________________________________________
+
+
+add_action('transition_post_status', 'maybe_send_on_publish', 20, 3);
+function maybe_send_on_publish($new_status, $old_status, $post)
+{
+    if (wp_is_post_revision($post->ID) || wp_is_post_autosave($post->ID)) {
+        return;
+    }
+
+    if ($old_status !== 'publish' && $new_status === 'publish') {
+
+        // Si un hook ACF existe, on laisse ce hook gérer l’envoi (fallback)
+        if (has_action('acf/save_post')) {
+            error_log("acf/save_post existe, on laisse le hook ACF faire l'envoi");
+            return;
+        }
+
+        // Vérifier que la clé API est configuré pour l’envoi
+        $raw_key = get_option('brevo_auto_campaign_APIKEY', '');
+        if (trim((string)$raw_key) === '') {
+            return;
+        }
+
+        handle_send_for_post($post->ID);
+    }
+}
+
+add_action('acf/save_post', 'handle_acf_save_post_send', 20);
+function handle_acf_save_post_send($post_id)
+{
+    // Vérifier qu’on n’a pas déjà envoyé pour ce post
+    if (get_post_meta($post_id, '_brevo_sent', true)) {
+        error_log("Publication déjà envoyée sur Brevo");
+        return;
+    }
+
+    $post = get_post($post_id);
+    if (!$post || $post->post_status !== 'publish') {
+        // Si le post n’est pas en statut "publish", on ne fait rien
+        return;
+    }
+
+    // Vérifier que la clé API est configuré pour l’envoi
+    $raw_key = get_option('brevo_auto_campaign_APIKEY', '');
+    if (trim((string)$raw_key) === '') {
+        return;
+    }
+
+    handle_send_for_post($post_id);
+}
+
+function handle_send_for_post($post_id)
+{
+    $post = get_post($post_id);
+
+    $configs = get_option('brevo_auto_campaign_config', []);
+
+    $cfg = $configs[$post->post_type] ?? null;
+
+    if (!$cfg || empty($cfg['enabled']) || empty($cfg['listIds']) || empty($cfg['templateId'])) {
+        return;
+    }
+
+    $fields = get_field_objects($post_id);
+    if (!$fields || !is_array($fields)) {
+        $fields = [];
+    }
+
+    $params = [];
+    foreach ($fields as $key => $field) {
+        $params[$key] = $field['value'];
+    }
+
+    $params['post_title'] = get_the_title(post: $post_id) ?: '';
+    $params['post_content'] = get_the_content(post: $post_id) ?: '';
+    $params['post_excerpt'] = get_the_excerpt(post: $post_id) ?: '';
+    $params['post_url'] = get_permalink(post: $post_id) ?: '';
+    $params['post_thumbnail'] = 'https://cdn.discordapp.com/attachments/1420498972753137794/1420508747528405012/image0.gif?ex=68d5a75d&is=68d455dd&hm=ef1e9b42ce31a74ba84c678260ced11a5d5f38cfde791ee7ae530a0194955b4f'; // get_the_post_thumbnail_url(post: $post_id) ?: '';
+
+    $brevo = new BrevoAPI();
+
+    $brevo->createCampaign(
+        templateId: (int)$cfg['templateId'],
+        listIds: array_map('intval', explode(',', $cfg['listIds'])),
+        post: $post,
+        params: $params,
+        sendNow: empty($cfg['draft'])
+    );
+
+    error_log("Envoi Brevo pour post {$post_id}, params : " . print_r($params, true));
+
+    // Marquer que l’on a envoyé pour ne pas répéter
+    update_post_meta($post_id, '_brevo_sent', 1);
+}

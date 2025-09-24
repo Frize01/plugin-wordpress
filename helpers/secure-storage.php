@@ -1,9 +1,10 @@
 <?php
-if (!defined('ABSPATH')) exit;
+
+declare(strict_types=1);
 
 class Secure_Storage {
 
-    private $key;
+    private string $key;
 
     public function __construct() {
         if (!defined('SECURE_STORAGE_KEY')) {
