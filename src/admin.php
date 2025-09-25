@@ -1,5 +1,4 @@
 <?php
-include_once __DIR__ . '/../helpers/brevo-api.php';
 function administration_add_admin_page()
 {
     add_submenu_page(
@@ -181,6 +180,8 @@ function administration_page()
                                         }
                                     }
                                     ?>
+
+                                    <span class="brevo-label" style="margin-top:12px;">Variables disponibles pour le template Brevo :</span>
 
                                     <p> Titre de la publication :
                                         <code style="background:#f4f4f4;border:1px solid #ddd;padding:2px 6px;margin:2px;display:inline-block;">
