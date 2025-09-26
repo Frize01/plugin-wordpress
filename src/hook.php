@@ -17,6 +17,12 @@ function maybe_send_on_publish($new_status, $old_status, $post)
             return;
         }
 
+        // Vérifier qu’on n’a pas déjà envoyé pour ce post
+        if (get_post_meta($post->ID, '_brevo_sent', true)) {
+            error_log("Publication déjà envoyée sur Brevo");
+            return;
+        }
+
         // Vérifier que la clé API est configuré pour l’envoi
         $raw_key = get_option('brevo_auto_campaign_APIKEY', '');
         if (trim((string)$raw_key) === '') {
@@ -50,4 +56,3 @@ function handle_acf_save_post_send($post_id)
 
     handle_send_for_post($post_id);
 }
-

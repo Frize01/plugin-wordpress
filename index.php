@@ -11,5 +11,5 @@ declare(strict_types=1);
 include_once __DIR__ . '/helpers/secure-storage.php';
 include_once __DIR__ . '/helpers/brevo-api.php';
 include_once __DIR__ . '/src/admin.php';
-include_once __DIR__ . '/src/handle.php';
 include_once __DIR__ . '/src/hook.php';
+include_once __DIR__ . '/src/handle.php';
